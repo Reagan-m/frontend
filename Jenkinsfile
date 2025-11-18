@@ -1,32 +1,36 @@
 pipeline {
-  agent any
-  environment {
-    IMAGE = "frontend-app:${env.BUILD_ID}"
-    CONTAINER_NAME = "frontend-service"
-    PORT = "80"
-  }
-  stages {
-    stage('Checkout') { steps { checkout scm } }
-    stage('Build') {
-      steps {
-        sh 'npm ci'
-        sh 'npm run build'
-      }
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/Reagan-m/frontend.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'npm ci'
+                sh 'npm run build'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t frontend-app:1 .'
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                sh 'docker stop frontend-container || true'
+                sh 'docker rm frontend-container || true'
+                sh 'docker run -d -p 80:80 --name frontend-container frontend-app:1'
+            }
+        }
     }
-    stage('Build Docker Image') {
-      steps {
-        sh "docker build -t ${IMAGE} ."
-      }
-    }
-    stage('Deploy') {
-      steps {
-        sh """
-          docker ps -q --filter "name=${CONTAINER_NAME}" | grep -q . && docker rm -f ${CONTAINER_NAME} || true
-          docker run -d --name ${CONTAINER_NAME} -p ${PORT}:${PORT} ${IMAGE}
-        """
-      }
-    }
-  }
 }
 
 
