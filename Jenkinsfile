@@ -27,7 +27,7 @@ pipeline {
             steps {
                 sh 'docker stop frontend-container || true'
                 sh 'docker rm frontend-container || true'
-                sh 'docker run -d -p 80:80 --name frontend-container frontend-app:1'
+                sh 'docker run -d -p 5000:80 --name frontend-container frontend-app:1'
             }
         }
     }
